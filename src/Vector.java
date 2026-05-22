@@ -36,6 +36,6 @@ public class Vector extends ArrayList<Double> {
     }
 
     public static boolean orthogonal(Vector v1, Vector v2) {
-        return dot(v1, v2)*1000 < v1.norm()*v2.norm();
+        return dot(v1, v2) < v1.norm()*v2.norm()*Config.orthogonalityThreshold;
     }
 }

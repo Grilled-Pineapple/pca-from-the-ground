@@ -1,0 +1,270 @@
+import java.util.*;
+
+public class Expression extends TreeMap<Integer, Expression.Term> {
+
+    public static class Term {
+        int power;
+        double coefficient;
+
+        public Term(int pow, double coef) {
+            power = pow;
+            coefficient = coef;
+        }
+
+        public void add(double coef) {
+            coefficient += coef;
+        }
+
+        public void add(Term t) {
+            if (t.power != power) {
+                throw new IllegalArgumentException("ensure powers are the same!");
+            }
+            coefficient += t.coefficient;
+        }
+    }
+
+    public Expression(){
+        super();
+    }
+
+    public Expression(List<Double> termList){
+        super();
+        int currPow = 0;
+        for (double d: termList) {
+            put(currPow, new Term(currPow, d));
+            currPow++;
+        }
+    }
+
+    public void addTerm(Term t) {
+        addTerm(t.power, t.coefficient);
+    }
+
+    public void addTerm(int pow, double coef) {
+        if (coef != 0) {
+            if (!containsKey(pow)) {
+                put(pow, new Term(pow,0));
+            }
+            get(pow).add(coef);
+        }
+    }
+
+    public Expression multiply(double d) {
+        Expression retval = new Expression();
+        for (Term t: values()) {
+            retval.addTerm(t.power, t.coefficient*d);
+        }
+        return retval;
+    }
+
+    public static Expression add(List<Expression> inputs){
+        Expression retval = new Expression();
+        for (Expression e: inputs) {
+            for (Term t: e.values()) {
+                retval.addTerm(t);
+            }
+        }
+        return retval;
+    }
+
+    public static Expression multiply(Expression expr1, Expression expr2) {
+        Expression retval = new Expression();
+        for (Term t: expr1.values()) {
+            for (Term t2: expr2.values()){
+                retval.addTerm(t.power+t2.power, t.coefficient*t2.coefficient);
+            }
+        }
+        return retval;
+    }
+
+    public double calculate(double x) {
+        double total = 0;
+        for (Term t: values()) {
+            total += Math.pow(x, t.power)*t.coefficient;
+        }
+        return total;
+    }
+
+    public Expression derivative() {
+        Expression d = new Expression();
+        for (Term t: values()) {
+            d.addTerm(t.power-1, t.coefficient*t.power);
+        }
+        return d;
+    }
+
+    public List<Double> solvePositive(){
+        Expression e = copy();
+        List<Double> roots = new ArrayList<>();
+        while (e.power() > 0) {
+            double root = e.findRoot();
+            roots.add(root);
+            e = e.removeRoot(root);
+        }
+        return roots;
+    }
+
+    private double findRoot() {
+        double roodimentary = findBisectionIntervalPositive(largestCoefficient()*Config.lowerBoundMult,
+                largestCoefficient());
+        return newtonMethod(roodimentary, roodimentary+Config.bisectionTolerance, derivative());
+    }
+    //TODO: ADD MAX RECURDEPTH
+
+    private double newtonMethod(double lb, double ub, Expression d) {
+        int attempts = 0;
+        Double retval = null;
+        Random r = new Random();
+        while (retval == null && attempts < Config.maxNewtonAttempts) {
+            double nextCurr = lb+(ub-lb)*r.nextDouble();
+            retval = newtonHelper(lb, ub, nextCurr , d, 0);
+        }
+        if (retval == null) {
+            throw new RuntimeException("somehow, your three safety nets ALL failed.");
+        }
+        return retval;
+    }
+
+    private Double newtonHelper(double lb, double ub, double curr, Expression d, int attempts) {
+        double next = curr-(calculate(curr)/d.calculate(curr));
+        if (next < lb || next > ub || attempts > Config.maxNewtonDepth) {
+            return null;
+        }
+        if (Math.abs(curr-next) <= Config.rootTolerance) {
+            return next;
+        }
+        return newtonHelper(lb, ub, next, d, attempts+1);
+    }
+
+    private record Interval(double lower, double upper) {
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) {
+                return true;
+            }
+            if (o instanceof Interval i) {
+                return Math.abs(i.lower-lower) < Config.precision &&
+                        Math.abs(i.upper-upper) < Config.precision;
+            }
+            return false;
+        }
+        @Override
+        public int hashCode(){
+            return (int) Math.round(lower*1000+upper);
+        }
+    }
+
+    private double findBisectionIntervalPositive(double j, double k) {
+        Queue<Interval> attempts = new LinkedList<>();
+        Set<Interval> tried = new HashSet<>();
+        attempts.add(new Interval(j, k));
+        int ops = 0;
+        Double output = null;
+        while (output == null && ops<Config.maxFBSIPDepth) {
+            Interval ivl = attempts.remove();
+
+            output = bisectRootPositive(ivl);
+            Interval i1 = new Interval(ivl.lower, ivl.upper + (ivl.upper - ivl.lower) / 10);
+            Interval i2 = new Interval(ivl.lower, ivl.upper - (ivl.upper - ivl.lower) / 10);
+
+            if (!tried.contains(i1)) {
+                attempts.add(i1);
+                tried.add(i1);
+            }
+            if (!tried.contains(i2)) {
+                attempts.add(i2);
+                tried.add(i2);
+            }
+            ops++;
+        }
+        if (output == null) {
+            throw new RuntimeException("Root not found. :(");
+        }
+        return output;
+    }
+
+    private Double bisectRootPositive(Interval ivl) {
+        return bisectRootPositive(ivl.lower, ivl.upper);
+    }
+
+    private Double bisectRootPositive(double j, double k) {
+        if (k-j < Config.bisectionTolerance) {
+            return j;
+        }
+        if (calculate(j)*calculate(k) <= 0) {
+            if (calculate(j)*calculate((j+k)/2) <= 0) {
+                return bisectRootPositive(j, (j+k)/2);
+            }
+            return bisectRootPositive((j+k)/2,k);
+        }
+        return null;
+    }
+
+    public Expression removeRoot(double root) { //divides the expression by x-root
+        int curPow = power();
+        Expression d = new Expression();
+        double curTerm;
+        double quotient = 0;
+        while (curPow > 0) {
+            curTerm = get(curPow).coefficient+quotient;
+            d.addTerm(curPow-1, curTerm);
+            quotient = curTerm * root;
+            curPow --;
+        }
+        return d;
+    }
+
+    private Expression copy(){
+        Expression c = new Expression();
+        for (Term t: values()) {
+            c.addTerm(t);
+        }
+        return c;
+    }
+
+    public int power() {
+        int k = lastKey();
+        while (get(k).coefficient < Config.precision) {
+            k = lowerKey(k);
+        }
+        return k;
+    }
+
+    public double largestCoefficient() {
+        double retval = 0;
+        for (Term t:values()) {
+            retval = Math.max(Math.abs(t.coefficient), retval);
+        }
+        return retval;
+    }
+
+    @Override
+    public String toString(){
+        StringBuilder retval = new StringBuilder();
+        for (int pow: keySet()) {
+            Term t = get(pow);
+            if (t.coefficient < 0) {
+                if (retval.length() > 2){
+                    retval.delete(retval.length()-2, retval.length());
+                }
+                retval.append("- ");
+            }
+            String s = String.valueOf(Math.abs(t.coefficient));
+            if (s.length() > 4) {
+                retval.append(s, 0, 4);
+            } else {
+                retval.append(s);
+            }
+            if (t.power != 0) {
+                retval.append(Config.eqSymbol);
+                if (t.power != 1) {
+                    retval.append("^");
+                    retval.append(t.power);
+                }
+            }
+            retval.append(" + ");
+        }
+        retval.delete(retval.length()-2, retval.length());
+        return retval.toString();
+    }
+}

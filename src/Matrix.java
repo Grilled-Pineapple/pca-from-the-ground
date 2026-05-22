@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.List;
 
 public class Matrix {
@@ -57,6 +58,60 @@ public class Matrix {
         }
     }
 
+    public List<Eigenpair> findEigenpairsPositive() {
+        List<Double> eigenvalues = charPolynomial().solvePositive();
+        return null;
+    }
+
+    public Expression charPolynomial(){
+        if (!isSquare()) {
+            throw new IllegalArgumentException("Must be a square matrix!");
+        }
+        return negate().charPolynomial(identity(height()));
+    }
+
+    private Expression charPolynomial(Matrix lambdas) {
+        if (height() == 1){
+            return new Expression(List.of(contents[0][0],lambdas.contents[0][0]));
+        }
+
+        List<Expression> exprList = new ArrayList<>();
+        for (int i = 0; i < height(); i++) {
+            Expression ts = new Expression(List.of(contents[i][0],lambdas.contents[i][0]));
+            exprList.add(Expression.multiply(
+                    ts,minor(i, 0).charPolynomial(lambdas.minor(i,0))));
+        }
+        return Expression.add(exprList);
+    }
+
+    private Matrix minor(int row, int col){ //index of removal
+        Matrix retval = new Matrix(height()-1, width()-1);
+        for (int i = 0; i < height()-1; i++) {
+            for (int j = 0; j < width()-1; j++) {
+                int p = i;
+                int q = j;
+                if (i >= row) {
+                    p++;
+                }
+                if (j >= col) {
+                    q++;
+                }
+                retval.contents[i][j] = contents[p][q];
+            }
+        }
+        return retval;
+    }
+
+    private Matrix negate(){ //returns a negative matrix
+        Matrix retval = new Matrix(height(), width());
+        for (int i = 0; i < height(); i++) {
+            for (int j = 0; j < width(); j++) {
+                retval.contents[i][j] = -contents[i][j];
+            }
+        }
+        return retval;
+    }
+
     public static Matrix multiply(Matrix a, Matrix b) {
         if (a.width() != b.height()) {
             throw new IllegalArgumentException("invalid matrix!");
@@ -70,7 +125,19 @@ public class Matrix {
         return result;
     }
 
+    public static Matrix identity(int n){
+        Matrix retval = new Matrix(n, n);
+        for (int i = 0; i < n; i++){
+            retval.contents[i][i] = 1;
+        }
+        return retval;
+    }
+
     //TODO: Override Equals + Hashcode
+
+    public boolean isSquare() {
+        return height() == width();
+    }
 
     @Override
     public String toString() { //for ease of printing
