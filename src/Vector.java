@@ -85,4 +85,15 @@ public class Vector extends ArrayList<Double> {
             add(0.0);
         }
     }
+
+    public Integer leftmostNonZeroIndex() {
+        int idx = 0;
+        while (Math.abs(get(idx)) < Config.precision) {
+            idx++;
+            if (idx >= size()) {
+                return null;
+            }
+        }
+        return idx;
+    }
 }

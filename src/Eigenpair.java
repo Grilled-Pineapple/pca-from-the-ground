@@ -5,4 +5,8 @@ public class Eigenpair {
         eigenvalue = d;
         eigenvector = v;
     }
+    @Override
+    public String toString(){
+        return eigenvalue + "-> " + eigenvector;
+    }
 }

@@ -50,7 +50,6 @@ public class Matrix {
     }
 
     public void swapRows(int r1, int r2) {
-        System.out.println("swappety swap");
         Vector v1 = new Vector(this, r1, 0);
         Vector v2 = new Vector(this, r2, 0);
         setRow(v1, r2);
@@ -105,17 +104,31 @@ public class Matrix {
         Matrix m = rowEchelon();
         Vector solutions = new Vector();
         solutions.setZeroes(m.width());
-        solutions.set(solutions.size()-1, 1.0); //sets the last entry to zero
+        int mostPivot = width();
         for (int i = height()-1; i >= 0; i--) {
             Vector v = new Vector(m, i, 0);
+
+            while (v.leftmostNonZeroIndex() == null) {
+                i--;
+                v = new Vector(m, i, 0);
+            }
+
+            while (mostPivot - v.leftmostNonZeroIndex() > 1) {
+
+                solutions.set(mostPivot-1, 1.0);
+                mostPivot--;
+            }
+            mostPivot = v.leftmostNonZeroIndex();
+
             double dot = Vector.dot(v, solutions);
+            solutions.set(mostPivot,-dot/v.get(mostPivot));
         }
+        return solutions;
     }
 
     public Matrix rowEchelon(){
         Matrix m = copy();
         for (int complete = 0; complete < height()-1; complete++) {
-            System.out.println(m);
             Vector save = new Vector(m,complete,0);
             for (int j = complete; j < height()-1; j++) {
                 Vector one = save;
@@ -127,20 +140,13 @@ public class Matrix {
                     save = two;
                     two = Vector.multiply(two, -one.get(complete)/two.get(complete));
                     two = Vector.sum(one, two);
-                    System.out.println(one);
-                    System.out.println(two);
-                    System.out.println(m);
                     m.setRow(two, j+1);
-                    System.out.println(m);
-                    System.out.println(two.norm());
                     if (two.isZero()) {
                         m.swapRows(j+1, height()-1);
                         j--;
                     }
-                    System.out.println(m);
                 }
             }
-            System.out.println();
         }
         return m;
     }

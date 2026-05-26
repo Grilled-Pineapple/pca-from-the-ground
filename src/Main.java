@@ -1,7 +1,7 @@
 import java.util.List;
 
 public class Main {
-    public void main(String[] args){
+    void main(String[] args){
         Expression two = new Expression(List.of(3.0,-4.0,1.0));
         System.out.println(two);
         System.out.println(two.removeRootFromBottom(1));
@@ -51,7 +51,7 @@ public class Main {
                 3, 8, 2, 17, 11, 8,
                 1, 1, -4, -1, -3, 2,
                 4, 10, 3, 19, 10, 9});
-        System.out.println(REtest.rowEchelon());
+        System.out.println(REtest.nullVector());
 
         Matrix test = new Matrix (6,3);
         test.set(new double[]{4.9671, -1.3826, 6.4769,
@@ -60,7 +60,7 @@ public class Main {
                 5.4256, -4.6342, -4.6573,
                 2.4196, -19.1328, -17.2492,
                 -5.6229, -10.1283, 3.1425});
-        //System.out.println(Matrix.multiply(test.transpose(),test).findEigenpairsPositive());
+        System.out.println(Matrix.multiply(test.transpose(),test).findEigenpairsPositive());
 
         System.out.println("done!");
 
