@@ -327,6 +327,7 @@ public class Expression extends TreeMap<Integer, Expression.Term> {
     }
 
     //DEBUG!
+    @Deprecated
     public List<Double> solvePositiveTopDown(){
         Expression e = copy();
         List<Double> roots = new ArrayList<>();

@@ -16,6 +16,46 @@ public class Vector extends ArrayList<Double> {
         }
     }
 
+    public Vector() {
+        super();
+    }
+
+    public static Vector sum(Vector v1, Vector v2) {
+        if (v1.size() != v2.size()) {
+            throw new IllegalArgumentException("vector input sizes must match!");
+        }
+        Vector v3 = new Vector();
+        for (int i = 0; i < v1.size(); i++) {
+            v3.add(v1.get(i)+v2.get(i));
+        }
+        return v3;
+    }
+
+    public static Vector multiply(Vector vector, double scalar) {
+        Vector v1 = new Vector();
+        for (double d: vector) {
+            v1.add(d*scalar);
+        }
+        return v1;
+    }
+
+    public Vector normalized(){
+        double norm = norm();
+        Vector retVec = new Vector();
+        for (Double d: this) {
+            retVec.add(d/norm);
+        }
+        return retVec;
+    }
+
+    public boolean isNormal(){
+        return Math.abs(norm()-1) < Config.normThreshold;
+    }
+
+    public boolean isZero() {
+        return Math.abs(norm()) < Config.normThreshold;
+    }
+
     public double norm(){
         double result = 0;
         for (double d: this) {
@@ -37,5 +77,12 @@ public class Vector extends ArrayList<Double> {
 
     public static boolean orthogonal(Vector v1, Vector v2) {
         return dot(v1, v2) < v1.norm()*v2.norm()*Config.orthogonalityThreshold;
+    }
+
+    public void setZeroes(int n) {
+        clear();
+        for (int i = 0; i < n; i++) {
+            add(0.0);
+        }
     }
 }

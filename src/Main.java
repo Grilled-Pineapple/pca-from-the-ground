@@ -44,6 +44,24 @@ public class Main {
         ));
         System.out.println(truncation.solvePositive());
 
+        Matrix REtest = new Matrix (6,6);
+        REtest.set(new double[]{1, 2, -1, 3, 1, 2,
+                2, 5, 1, 8, 4, 5,
+                1, 3, 3, 8, 5, 2,
+                3, 8, 2, 17, 11, 8,
+                1, 1, -4, -1, -3, 2,
+                4, 10, 3, 19, 10, 9});
+        System.out.println(REtest.rowEchelon());
+
+        Matrix test = new Matrix (6,3);
+        test.set(new double[]{4.9671, -1.3826, 6.4769,
+                15.2303, -2.3415, -2.3414,
+                15.7921, 7.6743, -4.6947,
+                5.4256, -4.6342, -4.6573,
+                2.4196, -19.1328, -17.2492,
+                -5.6229, -10.1283, 3.1425});
+        //System.out.println(Matrix.multiply(test.transpose(),test).findEigenpairsPositive());
+
         System.out.println("done!");
 
     }

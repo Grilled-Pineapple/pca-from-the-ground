@@ -3,6 +3,7 @@ public class Config {
     public static char eqSymbol = 'λ';
     public static double precision = 0.000000001;
     public static double orthogonalityThreshold = 0.0001;
+    public static double normThreshold = 0.00001;
     public static double bisectionTolerance = 0.1;
     public static int maxFBSIPDepth = 1000;
     public static int maxNewtonDepth = 100;

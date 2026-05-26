@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Matrix {
     public double[][] contents; //stores array contents
@@ -8,11 +10,11 @@ public class Matrix {
         contents = new double[h][w];
     }
 
-    public void add(int row, int column, double entry) { //ZERO INDEXED!
+    public void set(int row, int column, double entry) { //ZERO INDEXED!
         contents[row][column] = entry;
     }
 
-    public void add(double[] stuff) { //inserts a list of elements into the matrix. top to bottom first
+    public void set(double[] stuff) { //inserts a list of elements into the matrix. top to bottom first
         if (stuff.length != width()*height()){
             throw new IllegalArgumentException("one element per cell!");
         }
@@ -25,11 +27,41 @@ public class Matrix {
         }
     }
 
+    public void set(List<Double> stuff) { //inserts a list of elements into the matrix. top to bottom first
+        if (stuff.size() != width()*height()){
+            throw new IllegalArgumentException("one element per cell!");
+        }
+        int idx = 0;
+        for (int i = 0; i < height(); i++) {
+            for (int j = 0; j < width(); j++) {
+                contents[i][j] = stuff.get(idx);
+                idx++;
+            }
+        }
+    }
+
+    public void setRow(Vector v, int row) {
+        if (v.size() != width()) {
+            throw new IllegalArgumentException("mismatched dimensions!");
+        }
+        for (int i = 0; i < v.size(); i++) {
+            set(row, i, v.get(i));
+        }
+    }
+
+    public void swapRows(int r1, int r2) {
+        System.out.println("swappety swap");
+        Vector v1 = new Vector(this, r1, 0);
+        Vector v2 = new Vector(this, r2, 0);
+        setRow(v1, r2);
+        setRow(v2, r1);
+    }
+
     public Matrix transpose() {
         Matrix result = new Matrix(width(), height());
         for (int i = 0; i < height(); i++) {
             for (int j = 0; j < width(); j++){
-                result.add(j, i, contents[i][j]);
+                result.set(j, i, contents[i][j]);
             }
         }
         return result;
@@ -41,7 +73,7 @@ public class Matrix {
             Matrix result = new Matrix(end-start, width());
             for (int i = start; i < end; i++) {
                 for (int j = 0; j < width(); j++) {
-                    result.add(i-start,j,contents[i][j]);
+                    result.set(i-start,j,contents[i][j]);
                 }
             }
             return result;
@@ -49,7 +81,7 @@ public class Matrix {
             Matrix result = new Matrix(height(), end-start);
             for (int i = 0; i < height(); i++) {
                 for (int j = start; j < end; j++) {
-                    result.add(i,j-start,contents[i][j]);
+                    result.set(i,j-start,contents[i][j]);
                 }
             }
             return result;
@@ -60,14 +92,64 @@ public class Matrix {
 
     public List<Eigenpair> findEigenpairsPositive() {
         List<Double> eigenvalues = charPolynomial().solvePositive();
-        return null;
+        List<Eigenpair> eigenpairs = new ArrayList<>();
+        for (double ev: eigenvalues) {
+            Vector solVector = sum(this, identity(width()).multiply(-ev)).nullVector();
+            eigenpairs.add(new Eigenpair(ev, solVector));
+            //it is assumed that in SVD, duplicate pairs are extremely unlikely
+        }
+        return eigenpairs;
+    }
+
+    public Vector nullVector(){ //extracts one nullspace vector
+        Matrix m = rowEchelon();
+        Vector solutions = new Vector();
+        solutions.setZeroes(m.width());
+        solutions.set(solutions.size()-1, 1.0); //sets the last entry to zero
+        for (int i = height()-1; i >= 0; i--) {
+            Vector v = new Vector(m, i, 0);
+            double dot = Vector.dot(v, solutions);
+        }
+    }
+
+    public Matrix rowEchelon(){
+        Matrix m = copy();
+        for (int complete = 0; complete < height()-1; complete++) {
+            System.out.println(m);
+            Vector save = new Vector(m,complete,0);
+            for (int j = complete; j < height()-1; j++) {
+                Vector one = save;
+                while (j < height()-1 && m.contents[j+1][complete] == 0) {
+                    j++;
+                }
+                if (j < height()-1) {
+                    Vector two = new Vector(m, j+1, 0);
+                    save = two;
+                    two = Vector.multiply(two, -one.get(complete)/two.get(complete));
+                    two = Vector.sum(one, two);
+                    System.out.println(one);
+                    System.out.println(two);
+                    System.out.println(m);
+                    m.setRow(two, j+1);
+                    System.out.println(m);
+                    System.out.println(two.norm());
+                    if (two.isZero()) {
+                        m.swapRows(j+1, height()-1);
+                        j--;
+                    }
+                    System.out.println(m);
+                }
+            }
+            System.out.println();
+        }
+        return m;
     }
 
     public Expression charPolynomial(){
         if (!isSquare()) {
             throw new IllegalArgumentException("Must be a square matrix!");
         }
-        return negate().charPolynomial(identity(height()));
+        return multiply(-1).charPolynomial(identity(height()));
     }
 
     private Expression charPolynomial(Matrix lambdas) {
@@ -102,24 +184,37 @@ public class Matrix {
         return retval;
     }
 
-    private Matrix negate(){ //returns a negative matrix
+    private Matrix multiply(double k){ //scales by k
         Matrix retval = new Matrix(height(), width());
         for (int i = 0; i < height(); i++) {
             for (int j = 0; j < width(); j++) {
-                retval.contents[i][j] = -contents[i][j];
+                retval.contents[i][j] = k*contents[i][j];
             }
         }
         return retval;
     }
 
+    public static Matrix sum(Matrix a, Matrix b) { //might make a dynamic method to do this too
+        if (a.width() != b.width() || a.height() != b.height()) {
+            throw new IllegalArgumentException("must be same shape to sum!");
+        }
+        Matrix result = new Matrix(a.height(), a.width());
+        for (int i = 0; i < a.height(); i++) {
+            for (int j = 0; j < a.width(); j++) {
+                result.contents[i][j] = a.contents[i][j]+b.contents[i][j];
+            }
+        }
+        return result;
+    }
+
     public static Matrix multiply(Matrix a, Matrix b) {
         if (a.width() != b.height()) {
-            throw new IllegalArgumentException("invalid matrix!");
+            throw new IllegalArgumentException("non-matching output/input dimensions!");
         }
         Matrix result = new Matrix(a.height(), b.width());
         for (int i = 0; i < a.height(); i++) {
             for (int j = 0; j < b.width(); j++) {
-                result.add(i,j,Vector.dot(new Vector(a,i,0), new Vector(b,j,1)));
+                result.set(i,j,Vector.dot(new Vector(a,i,0), new Vector(b,j,1)));
             }
         }
         return result;
@@ -131,6 +226,16 @@ public class Matrix {
             retval.contents[i][i] = 1;
         }
         return retval;
+    }
+
+    public Matrix copy(){
+        Matrix copy = new Matrix(height(), width());
+        for (int i = 0; i < height(); i++) {
+            for (int j = 0; j < width(); j++) {
+                copy.set(i,j,contents[i][j]);
+            }
+        }
+        return copy;
     }
 
     //TODO: Override Equals + Hashcode
