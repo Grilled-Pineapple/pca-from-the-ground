@@ -6,7 +6,11 @@ public class Config {
     public static double bisectionTolerance = 0.1;
     public static int maxFBSIPDepth = 1000;
     public static int maxNewtonDepth = 100;
-    public static int maxNewtonAttempts = 10;
-    public static double rootTolerance = 0.0000000;
-    public static double lowerBoundMult = 0.001;
+    public static int maxNewtonAttempts = 20;
+    public static double minRootToleranceProportion = 0.000000000000000000001;
+    public static double maxRootToleranceProportion = 0.01;
+    public static double initLowerBoundMult = 0.5;
+    public static double iterationLowerBoundMult = 0.8;
+    public static double minLowerBoundMult = 0.0000000000000000000000001;
+
 }

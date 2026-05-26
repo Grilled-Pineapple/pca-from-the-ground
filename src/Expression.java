@@ -96,44 +96,67 @@ public class Expression extends TreeMap<Integer, Expression.Term> {
     public List<Double> solvePositive(){
         Expression e = copy();
         List<Double> roots = new ArrayList<>();
-        while (e.power() > 0) {
-            double root = e.findRoot();
-            roots.add(root);
-            e = e.removeRoot(root);
+        boolean keepGoing = true;
+        while (keepGoing && e.power() > 0) {
+            try {
+                double root = e.findRoot();
+                roots.add(root);
+                if (root > 1) {
+                    e = e.removeRootFromBottom(root);
+                } else {
+                    e = e.removeRoot(root);
+                }
+
+            } catch (Exception ex) {
+                keepGoing = false;
+                System.out.println(roots.size()+" roots found; error thrown!");
+                ex.printStackTrace(System.out);
+            }
         }
         return roots;
     }
 
     private double findRoot() {
-        double roodimentary = findBisectionIntervalPositive(largestCoefficient()*Config.lowerBoundMult,
+        double roodimentary = findBisectionIntervalPositive(largestCoefficient()*Config.initLowerBoundMult,
                 largestCoefficient());
-        return newtonMethod(roodimentary, roodimentary+Config.bisectionTolerance, derivative());
+        return newtonMethod(roodimentary-Config.bisectionTolerance,
+                roodimentary+Config.bisectionTolerance*2, derivative());
+        //adds a bit of wiggle room to both sides to prevent errors
     }
     //TODO: ADD MAX RECURDEPTH
 
     private double newtonMethod(double lb, double ub, Expression d) {
-        int attempts = 0;
+        int attempts;
         Double retval = null;
         Random r = new Random();
-        while (retval == null && attempts < Config.maxNewtonAttempts) {
-            double nextCurr = lb+(ub-lb)*r.nextDouble();
-            retval = newtonHelper(lb, ub, nextCurr , d, 0);
+        double tolerance = Config.minRootToleranceProportion;
+        while (retval == null && tolerance < Config.maxRootToleranceProportion) {
+            attempts = 0;
+            while (retval == null && attempts < Config.maxNewtonAttempts) {
+                double nextCurr = lb+(ub-lb)*r.nextDouble();
+                retval = newtonHelper(lb, ub, nextCurr , d, 0, tolerance);
+                attempts++;
+            }
+            tolerance *= 10;
         }
         if (retval == null) {
-            throw new RuntimeException("somehow, your three safety nets ALL failed.");
+            if (tolerance > Config.maxRootToleranceProportion) {
+                throw new RuntimeException("root precision too low!");
+            }
+            throw new RuntimeException("code done sank like the titanic");
         }
         return retval;
     }
 
-    private Double newtonHelper(double lb, double ub, double curr, Expression d, int attempts) {
+    private Double newtonHelper(double lb, double ub, double curr, Expression d, int attempts, double tolerance) {
         double next = curr-(calculate(curr)/d.calculate(curr));
         if (next < lb || next > ub || attempts > Config.maxNewtonDepth) {
             return null;
         }
-        if (Math.abs(curr-next) <= Config.rootTolerance) {
+        if (Math.abs(curr-next) <= Math.abs(curr)*tolerance) {
             return next;
         }
-        return newtonHelper(lb, ub, next, d, attempts+1);
+        return newtonHelper(lb, ub, next, d, attempts+1, tolerance);
     }
 
     private record Interval(double lower, double upper) {
@@ -155,27 +178,39 @@ public class Expression extends TreeMap<Integer, Expression.Term> {
     }
 
     private double findBisectionIntervalPositive(double j, double k) {
-        Queue<Interval> attempts = new LinkedList<>();
-        Set<Interval> tried = new HashSet<>();
-        attempts.add(new Interval(j, k));
-        int ops = 0;
+        if (j>k) {
+            throw new IllegalArgumentException("bruh I KNEW it");
+        }
         Double output = null;
-        while (output == null && ops<Config.maxFBSIPDepth) {
-            Interval ivl = attempts.remove();
+        double low = j;
+        double high = k;
 
-            output = bisectRootPositive(ivl);
-            Interval i1 = new Interval(ivl.lower, ivl.upper + (ivl.upper - ivl.lower) / 10);
-            Interval i2 = new Interval(ivl.lower, ivl.upper - (ivl.upper - ivl.lower) / 10);
+        while (output == null && low > k*Config.minLowerBoundMult) {
+            Queue<Interval> attempts = new LinkedList<>();
+            Set<Interval> tried = new HashSet<>();
+            boolean thereIsSomethingLeftForUs = true;
+            attempts.add(new Interval(low, high));
+            int ops = 0;
+            while (output == null && ops<Config.maxFBSIPDepth && thereIsSomethingLeftForUs) {
+                Interval ivl = attempts.remove();
+                output = bisectRootPositive(ivl);
+                Interval i1 = new Interval(ivl.lower, ivl.upper + (ivl.upper - ivl.lower) / 5);
+                Interval i2 = new Interval(ivl.lower, ivl.upper - (ivl.upper - ivl.lower) / 3);
 
-            if (!tried.contains(i1)) {
-                attempts.add(i1);
-                tried.add(i1);
+                if (!tried.contains(i1) && i1.upper < high) {
+                    attempts.add(i1);
+                    tried.add(i1);
+                }
+                if (!tried.contains(i2)) {
+                    attempts.add(i2);
+                    tried.add(i2);
+                }
+
+                thereIsSomethingLeftForUs = attempts.isEmpty();
+                ops++;
             }
-            if (!tried.contains(i2)) {
-                attempts.add(i2);
-                tried.add(i2);
-            }
-            ops++;
+            high = low;
+            low *= Config.iterationLowerBoundMult;
         }
         if (output == null) {
             throw new RuntimeException("Root not found. :(");
@@ -188,8 +223,14 @@ public class Expression extends TreeMap<Integer, Expression.Term> {
     }
 
     private Double bisectRootPositive(double j, double k) {
+        if (j>k) {
+            throw new IllegalArgumentException("bruh I KNEW it");
+        }
         if (k-j < Config.bisectionTolerance) {
-            return j;
+            if (calculate(j)*calculate(k) <= 0) {
+                return j;
+            }
+            return null; //accounts for hitting interval edge
         }
         if (calculate(j)*calculate(k) <= 0) {
             if (calculate(j)*calculate((j+k)/2) <= 0) {
@@ -210,6 +251,23 @@ public class Expression extends TreeMap<Integer, Expression.Term> {
             d.addTerm(curPow-1, curTerm);
             quotient = curTerm * root;
             curPow --;
+        }
+        return d;
+    }
+
+    public Expression removeRootFromBottom(double root) { //suggested by Gemini (written by me)
+        //I guess it makes sense that this reduces the error
+        //because all future roots are smaller and thus are less affected by
+        //changes to the most significant coefficient
+        int curPow = 0;
+        Expression d = new Expression();
+        double tsTerm;
+        double upQuotient = 0;
+        while (curPow < power()) {
+            tsTerm = -get(curPow).coefficient/root + upQuotient/root;
+            d.addTerm(curPow, tsTerm);
+            upQuotient = tsTerm;
+            curPow ++;
         }
         return d;
     }
@@ -266,5 +324,24 @@ public class Expression extends TreeMap<Integer, Expression.Term> {
         }
         retval.delete(retval.length()-2, retval.length());
         return retval.toString();
+    }
+
+    //DEBUG!
+    public List<Double> solvePositiveTopDown(){
+        Expression e = copy();
+        List<Double> roots = new ArrayList<>();
+        boolean keepGoing = true;
+        while (keepGoing && e.power() > 0) {
+            try {
+                double root = e.findRoot();
+                roots.add(root);
+                e = e.removeRoot(root);
+            } catch (Exception ex) {
+                keepGoing = false;
+                System.out.println(roots.size()+" roots found; error thrown!");
+                ex.printStackTrace(System.out);
+            }
+        }
+        return roots;
     }
 }
