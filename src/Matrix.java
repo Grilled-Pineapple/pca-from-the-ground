@@ -39,10 +39,19 @@ public class Matrix {
 
     public void setRow(Vector v, int row) {
         if (v.size() != width()) {
-            throw new IllegalArgumentException("mismatched dimensions!");
+            throw new IllegalArgumentException("mismatched dimensions: "+v.size()+" and "+width());
         }
         for (int i = 0; i < v.size(); i++) {
             set(row, i, v.get(i));
+        }
+    }
+
+    public void setColumn(Vector v, int col) {
+        if (v.size() != height()) {
+            throw new IllegalArgumentException("mismatched dimensions: "+v.size()+" and "+height());
+        }
+        for (int i = 0; i < v.size(); i++) {
+            set(i, col, v.get(i));
         }
     }
 
@@ -105,50 +114,82 @@ public class Matrix {
         }
     }
 
-    public Vector nullVector(){ //extracts one nullspace vector
+    public List<Vector> nullSpace(){ //extracts ALL nullspace vectors
         Matrix m = rowEchelon();
-        Vector solutions = new Vector();
-        solutions.setZeroes(m.width());
+        List<Vector> valid = new ArrayList<>();
         int mostPivot = width();
+        valid.add(Vector.zeroes(width())); //duplicate vector every time a new freedom opportunity comes up
+
         for (int i = height()-1; i >= 0; i--) {
+
             Vector v = new Vector(m, i, 0);
-
-            while (v.leftmostNonZeroIndex() == null) {
+            while (i > 0 && v.leftmostNonZeroIndex() == null) {
                 i--;
-                v = new Vector(m, i, 0);
+                v = new Vector(m,i,0);
             }
 
-            while (mostPivot - v.leftmostNonZeroIndex() > 1) {
-
-                solutions.set(mostPivot-1, 1.0);
-                mostPivot--;
+            if (i == 0) {
+                v = new Vector(m,i,0);
+                if (v.leftmostNonZeroIndex() == null) {
+                    i--;
+                }
             }
-            mostPivot = v.leftmostNonZeroIndex();
 
-            double dot = Vector.dot(v, solutions);
-            solutions.set(mostPivot,-dot/v.get(mostPivot));
+            if (i >= 0) {
+                while (mostPivot-v.leftmostNonZeroIndex() > 1) {
+                    valid.getLast().set(mostPivot-1, 1.0);
+                    valid.add(Vector.zeroes(width()));
+                    mostPivot--;
+                }
+                mostPivot = v.leftmostNonZeroIndex();
+
+                for (Vector vee: valid) { //heh
+                    double dot = Vector.dot(vee, v);
+                    vee.set(mostPivot,-dot/v.get(mostPivot));
+                }
+            }
         }
-        return solutions;
+        valid.removeLast();
+
+        List<Vector> norm = new ArrayList<>();
+
+        for (Vector vee: valid) {
+            norm.add(vee.normalized());
+        }
+
+        return norm;
+    }
+
+    public Vector nullVector(){ //extracts one nullspace vector
+        return nullSpace().getFirst();
     }
 
     public Matrix rowEchelon(){
         Matrix m = copy();
-        for (int complete = 0; complete < height()-1; complete++) {
+        int bonusZeroes = 0;
+        for (int complete = 0; complete < Math.min(height(),width()); complete++) {
             Vector save = new Vector(m,complete,0);
-            for (int j = complete; j < height()-1; j++) {
-                Vector one = save;
-                while (j < height()-1 && m.contents[j+1][complete] == 0) {
-                    j++;
-                }
-                if (j < height()-1) {
-                    Vector two = new Vector(m, j+1, 0);
-                    save = two;
-                    two = Vector.multiply(two, -one.get(complete)/two.get(complete));
-                    two = Vector.sum(one, two);
-                    m.setRow(two, j+1);
-                    if (two.isZero()) {
-                        m.swapRows(j+1, height()-1);
-                        j--;
+            while (complete+bonusZeroes < height() &&
+                    new Vector(m, complete + bonusZeroes, 1).isZeroPast(complete)) {
+                bonusZeroes++;
+            }
+            if (complete + bonusZeroes < height()) {
+                for (int j = complete; j < height()-1; j++) {
+                    Vector one = save;
+                    while (j < height()-1 && m.contents[j+1][complete+bonusZeroes] == 0) {
+                        j++;
+                    }
+                    if (j < height()-1) {
+                        Vector two = new Vector(m, j+1, 0);
+                        save = two;
+                        two = Vector.multiply(two, -one.get(complete+bonusZeroes)
+                                /two.get(complete+bonusZeroes));
+                        two = Vector.sum(one, two);
+                        m.setRow(two, j+1);
+                        if (two.isZero()) {
+                            m.swapRows(j+1, height()-1);
+                            j--;
+                        }
                     }
                 }
             }
@@ -284,5 +325,22 @@ public class Matrix {
 
     public int width() {
         return contents[0].length;
+    }
+
+    public Matrix round(int sf){
+        Matrix copy = new Matrix(height(), width());
+        for (int i = 0; i < height(); i++) {
+            for (int j = 0; j < width(); j++) {
+                copy.set(i,j,round(contents[i][j], sf));
+            }
+        }
+        return copy;
+    }
+
+    private double round(double num, int sf) {
+        num = num*Math.pow(10,sf);
+        num = (double) Math.round(num);
+        num = num/Math.pow(10,sf);
+        return num;
     }
 }

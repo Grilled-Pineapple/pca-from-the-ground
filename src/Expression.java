@@ -120,8 +120,7 @@ public class Expression extends TreeMap<Integer, Expression.Term> {
         if (power() == 1) {
             return -get(0).coefficient/get(1).coefficient;
         }
-        double roodimentary = findBisectionIntervalPositive(largestCoefficient()*Config.initLowerBoundMult,
-                largestCoefficient());
+        double roodimentary = findBisectionIntervalPositive(largestCoefficient());
         return newtonMethod(roodimentary-Config.bisectionTolerance,
                 roodimentary+Config.bisectionTolerance*2, derivative());
         //adds a bit of wiggle room to both sides to prevent errors
@@ -180,48 +179,17 @@ public class Expression extends TreeMap<Integer, Expression.Term> {
         }
     }
 
-    private double findBisectionIntervalPositive(double j, double k) {
-        System.out.println(this);
-        if (j>k) {
-            throw new IllegalArgumentException("bruh I KNEW it");
-        }
-
+    private double findBisectionIntervalPositive(double max) {
         Double output = null;
-        double low = j;
-        double high = k;
+        double high = max;
+        double low = high;
+        int ops = 0;
 
-        while (output == null && low > k*Config.minLowerBoundMult) {
-            Queue<Interval> attempts = new LinkedList<>();
-            Set<Interval> tried = new HashSet<>();
-            boolean thereIsSomethingLeftForUs = true;
-            attempts.add(new Interval(low, high));
-            int ops = 0;
-            while (output == null && ops<Config.maxFBSIPDepth && thereIsSomethingLeftForUs) {
-                Interval ivl = attempts.remove();
-
-                //okay it turns out this was bugging out because for the last root,
-                //the coefficient is equal to the root.
-                //should have fixed this using extremely smart termination
-                //when the power is equal to one.
-
-                output = bisectRootPositive(ivl);
-                Interval i1 = new Interval(ivl.lower, ivl.upper + (ivl.upper - ivl.lower) / 5);
-                Interval i2 = new Interval(ivl.lower, ivl.upper - (ivl.upper - ivl.lower) / 3);
-
-                if (!tried.contains(i1) && i1.upper < high) {
-                    attempts.add(i1);
-                    tried.add(i1);
-                }
-                if (!tried.contains(i2) && i2.lower > low) {
-                    attempts.add(i2);
-                    tried.add(i2);
-                }
-
-                thereIsSomethingLeftForUs = !attempts.isEmpty();
-                ops++;
-            }
+        while (output == null && low > max*Config.minLowerBoundMult && ops < Config.maxFBSIPDepth) {
+            low = high*Config.bisectIterationMult;
+            output = bisectRootPositive(low, high);
             high = low;
-            low *= Config.iterationLowerBoundMult;
+            ops++;
         }
         if (output == null) {
             throw new RuntimeException("Root not found. :(");

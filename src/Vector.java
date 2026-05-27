@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.List;
 
 public class Vector extends ArrayList<Double> {
     public Vector(Matrix m, int idx, int axis) {
@@ -39,6 +40,18 @@ public class Vector extends ArrayList<Double> {
         return v1;
     }
 
+    public static Vector zeroes(int size){
+        Vector v = new Vector();
+        v.setZeroes(size);
+        return v;
+    }
+
+    public Vector copy(){
+        Vector rv = new Vector();
+        rv.addAll(this);
+        return rv;
+    }
+
     public Vector normalized(){
         double norm = norm();
         Vector retVec = new Vector();
@@ -54,6 +67,51 @@ public class Vector extends ArrayList<Double> {
 
     public boolean isZero() {
         return Math.abs(norm()) < Config.normThreshold;
+    }
+
+    public Matrix matrixify(int axis) {
+        //0: horizontal (row), 1: vertical (col)
+        if (axis == 0) {
+            Matrix m = new Matrix(1, size());
+            m.setRow(this, 0);
+            return m;
+        } else if (axis == 1) {
+            Matrix m = new Matrix(size(), 1);
+            m.setColumn(this, 0);
+            return m;
+        } else {
+            throw new IllegalArgumentException("axis not supported");
+        }
+    }
+
+    private Vector truncate(int idx) { //shaves off all entries before idx (exclusive)
+        Vector revec = new Vector();
+        for (int i = idx; i < size(); i++) {
+            revec.add(get(i));
+        }
+        return revec;
+    }
+
+    public static List<Vector> fillBasis(List<Vector> orthogonals){
+        //maintains order! hopefully.
+        if (!orthonormal(orthogonals)) {
+            throw new IllegalArgumentException("orthonormalize vectors first!");
+        }
+        Matrix tp = new Matrix(orthogonals.size(),orthogonals.getFirst().size());
+        int i = 0;
+        for (Vector v: orthogonals) {
+            tp.setRow(v, i);
+            i++;
+        }
+
+        List<Vector> retval = new ArrayList<>();
+        retval.addAll(orthogonals);
+        retval.addAll(tp.nullSpace());
+        return retval;
+    }
+
+    public boolean isZeroPast(int idx) {
+        return Math.abs(truncate(idx).norm()) < Config.normThreshold;
     }
 
     public double norm(){
@@ -77,6 +135,23 @@ public class Vector extends ArrayList<Double> {
 
     public static boolean orthogonal(Vector v1, Vector v2) {
         return dot(v1, v2) < v1.norm()*v2.norm()*Config.orthogonalityThreshold;
+    }
+
+    public static boolean orthonormal(List<Vector> orthonormals) {
+
+        for (int i = 0; i < orthonormals.size(); i++) {
+            for (int j = i+1; j < orthonormals.size(); j++) {
+                if (!orthogonal(orthonormals.get(i), orthonormals.get(j))) {
+                    return false;
+                }
+            }
+        }
+        for (Vector v: orthonormals) {
+            if (!v.isNormal()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public void setZeroes(int n) {
