@@ -54,13 +54,16 @@ public class Main {
         System.out.println(REtest.nullVector());
 
         Matrix test = new Matrix (6,3);
-        test.set(new double[]{4.9671, -1.3826, 6.4769,
-                15.2303, -2.3415, -2.3414,
-                15.7921, 7.6743, -4.6947,
-                5.4256, -4.6342, -4.6573,
-                2.4196, -19.1328, -17.2492,
-                -5.6229, -10.1283, 3.1425});
-        System.out.println(Matrix.multiply(test.transpose(),test).findEigenpairsPositive());
+        test.set(new double[]{2, 0, 1,
+                1, 3, 0,
+                0, 1, 4,
+                2, 1, 1,
+                -1, 2, 0,
+                0, -1, 3});
+        Matrix ata = Matrix.multiply(test.transpose(),test);
+        System.out.println(ata);
+        System.out.println(ata.charPolynomial());
+        System.out.println(ata.charPolynomial().solvePositive());
 
         System.out.println("done!");
 

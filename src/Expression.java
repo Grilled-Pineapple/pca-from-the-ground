@@ -193,6 +193,7 @@ public class Expression extends TreeMap<Integer, Expression.Term> {
             int ops = 0;
             while (output == null && ops<Config.maxFBSIPDepth && thereIsSomethingLeftForUs) {
                 Interval ivl = attempts.remove();
+
                 output = bisectRootPositive(ivl);
                 Interval i1 = new Interval(ivl.lower, ivl.upper + (ivl.upper - ivl.lower) / 5);
                 Interval i2 = new Interval(ivl.lower, ivl.upper - (ivl.upper - ivl.lower) / 3);
@@ -206,7 +207,7 @@ public class Expression extends TreeMap<Integer, Expression.Term> {
                     tried.add(i2);
                 }
 
-                thereIsSomethingLeftForUs = attempts.isEmpty();
+                thereIsSomethingLeftForUs = !attempts.isEmpty();
                 ops++;
             }
             high = low;

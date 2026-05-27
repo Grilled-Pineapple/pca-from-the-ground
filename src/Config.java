@@ -1,7 +1,7 @@
 public class Config {
     public static int maxPrintSize = 100;
     public static char eqSymbol = 'λ';
-    public static double precision = 0.000000001;
+    public static double precision = 0.00000001;
     public static double orthogonalityThreshold = 0.0001;
     public static double normThreshold = 0.00001;
     public static double bisectionTolerance = 0.1;
@@ -12,6 +12,6 @@ public class Config {
     public static double maxRootToleranceProportion = 0.01;
     public static double initLowerBoundMult = 0.5;
     public static double iterationLowerBoundMult = 0.8;
-    public static double minLowerBoundMult = 0.0000000000000000000000001;
+    public static double minLowerBoundMult = 0.000001;
 
 }
