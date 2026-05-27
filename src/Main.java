@@ -44,15 +44,6 @@ public class Main {
         ));
         System.out.println(truncation.solvePositive());
 
-        Matrix REtest = new Matrix (6,6);
-        REtest.set(new double[]{1, 2, -1, 3, 1, 2,
-                2, 5, 1, 8, 4, 5,
-                1, 3, 3, 8, 5, 2,
-                3, 8, 2, 17, 11, 8,
-                1, 1, -4, -1, -3, 2,
-                4, 10, 3, 19, 10, 9});
-        System.out.println(REtest.nullVector());
-
         Matrix test = new Matrix (6,3);
         test.set(new double[]{2, 0, 1,
                 1, 3, 0,
@@ -61,9 +52,7 @@ public class Main {
                 -1, 2, 0,
                 0, -1, 3});
         Matrix ata = Matrix.multiply(test.transpose(),test);
-        System.out.println(ata);
-        System.out.println(ata.charPolynomial());
-        System.out.println(ata.charPolynomial().solvePositive());
+        System.out.println(ata.findEigenpairsPositive());
 
         System.out.println("done!");
 

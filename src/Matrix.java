@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Matrix {
     public double[][] contents; //stores array contents
@@ -94,10 +91,18 @@ public class Matrix {
         List<Eigenpair> eigenpairs = new ArrayList<>();
         for (double ev: eigenvalues) {
             Vector solVector = sum(this, identity(width()).multiply(-ev)).nullVector();
-            eigenpairs.add(new Eigenpair(ev, solVector));
+            eigenpairs.add(new Eigenpair(ev, solVector.normalized()));
             //it is assumed that in SVD, duplicate pairs are extremely unlikely
         }
+        eigenpairs.sort(new ReverseEigenComparator());
         return eigenpairs;
+    }
+
+    private static class ReverseEigenComparator implements Comparator<Eigenpair> {
+        @Override
+        public int compare(Eigenpair o1, Eigenpair o2) {
+            return -o1.compareTo(o2);
+        }
     }
 
     public Vector nullVector(){ //extracts one nullspace vector
@@ -162,17 +167,17 @@ public class Matrix {
         if (height() == 1){
             return new Expression(List.of(contents[0][0],lambdas.contents[0][0]));
         }
-
         List<Expression> exprList = new ArrayList<>();
         for (int i = 0; i < height(); i++) {
             Expression ts = new Expression(List.of(contents[i][0],lambdas.contents[i][0]));
             exprList.add(Expression.multiply(
-                    ts,minor(i, 0).charPolynomial(lambdas.minor(i,0))));
+                    ts,minor(i, 0).charPolynomial(lambdas.minor(i,0))).multiply(
+                            Math.pow(-1,i)));
         }
         return Expression.add(exprList);
     }
 
-    private Matrix minor(int row, int col){ //index of removal
+    public Matrix minor(int row, int col){ //index of removal
         Matrix retval = new Matrix(height()-1, width()-1);
         for (int i = 0; i < height()-1; i++) {
             for (int j = 0; j < width()-1; j++) {

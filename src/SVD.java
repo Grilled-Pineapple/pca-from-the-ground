@@ -3,6 +3,9 @@ public class SVD {
     public Matrix z;
     public Matrix v;
     public SVD(Matrix a) {
-        Matrix ata = Matrix.multiply(a, a.transpose());
+        if (a.height() >= a.width()) {
+            Matrix ata = Matrix.multiply(a.transpose(), a);
+            ata.findEigenpairsPositive();
+        }
     }
 }

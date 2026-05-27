@@ -11,7 +11,7 @@ public class Config {
     public static double minRootToleranceProportion = 0.000000000000000000001;
     public static double maxRootToleranceProportion = 0.01;
     public static double initLowerBoundMult = 0.5;
-    public static double iterationLowerBoundMult = 0.8;
-    public static double minLowerBoundMult = 0.000001;
+    public static double iterationLowerBoundMult = 0.7;
+    public static double minLowerBoundMult = 0.00000000001;
 
 }

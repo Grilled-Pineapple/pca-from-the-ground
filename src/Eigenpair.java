@@ -1,4 +1,4 @@
-public class Eigenpair {
+public class Eigenpair implements Comparable<Eigenpair> {
     public double eigenvalue;
     public Vector eigenvector;
     public Eigenpair(double d, Vector v) {
@@ -7,6 +7,17 @@ public class Eigenpair {
     }
     @Override
     public String toString(){
-        return eigenvalue + "-> " + eigenvector;
+        return eigenvalue + "-> " + eigenvector + "\n";
+    }
+
+    @Override
+    public int compareTo(Eigenpair o) {
+        if (eigenvalue > o.eigenvalue) { //this avoids same-int rounding doubles becoming "equal"
+            return 1;
+        } else if (Math.abs(eigenvalue-o.eigenvalue) < Config.precision) {
+            return 0;
+        } else {
+            return -1;
+        }
     }
 }

@@ -117,6 +117,9 @@ public class Expression extends TreeMap<Integer, Expression.Term> {
     }
 
     private double findRoot() {
+        if (power() == 1) {
+            return -get(0).coefficient/get(1).coefficient;
+        }
         double roodimentary = findBisectionIntervalPositive(largestCoefficient()*Config.initLowerBoundMult,
                 largestCoefficient());
         return newtonMethod(roodimentary-Config.bisectionTolerance,
@@ -178,9 +181,11 @@ public class Expression extends TreeMap<Integer, Expression.Term> {
     }
 
     private double findBisectionIntervalPositive(double j, double k) {
+        System.out.println(this);
         if (j>k) {
             throw new IllegalArgumentException("bruh I KNEW it");
         }
+
         Double output = null;
         double low = j;
         double high = k;
@@ -194,6 +199,11 @@ public class Expression extends TreeMap<Integer, Expression.Term> {
             while (output == null && ops<Config.maxFBSIPDepth && thereIsSomethingLeftForUs) {
                 Interval ivl = attempts.remove();
 
+                //okay it turns out this was bugging out because for the last root,
+                //the coefficient is equal to the root.
+                //should have fixed this using extremely smart termination
+                //when the power is equal to one.
+
                 output = bisectRootPositive(ivl);
                 Interval i1 = new Interval(ivl.lower, ivl.upper + (ivl.upper - ivl.lower) / 5);
                 Interval i2 = new Interval(ivl.lower, ivl.upper - (ivl.upper - ivl.lower) / 3);
@@ -202,7 +212,7 @@ public class Expression extends TreeMap<Integer, Expression.Term> {
                     attempts.add(i1);
                     tried.add(i1);
                 }
-                if (!tried.contains(i2)) {
+                if (!tried.contains(i2) && i2.lower > low) {
                     attempts.add(i2);
                     tried.add(i2);
                 }
