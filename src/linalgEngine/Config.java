@@ -3,8 +3,8 @@ package linalgEngine;
 public class Config {
     public static int maxPrintSize = 100;
     public static char eqSymbol = 'λ';
-    public static double precision = 0.0001; //might need to lower this to detect nullspace
-    //TODO: FIX LOW PRECISION BUG
+    public static double precision = 0.0000000001; //might need to lower this to detect nullspace
+    public static double maxZeroThresholdNullspace = 0.001;
     public static double orthogonalityThreshold = 0.0001;
     public static double normThreshold = 0.00001;
     public static double bisectionTolerance = 0.1;

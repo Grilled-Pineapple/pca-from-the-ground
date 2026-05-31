@@ -101,7 +101,7 @@ public class Matrix {
         List<Double> eigenvalues = charPolynomial().solvePositive();
         List<Eigenpair> eigenpairs = new ArrayList<>();
         for (double ev: eigenvalues) {
-            Vector solVector = sum(this, identity(width()).multiply(-ev)).nullVector();
+            Vector solVector = sum(this, identity(width()).multiply(-ev)).nullVector(true);
             eigenpairs.add(new Eigenpair(ev, solVector.normalized()));
             //it is assumed that in SVD, duplicate pairs are extremely unlikely
         }
@@ -116,7 +116,11 @@ public class Matrix {
         }
     }
 
-    public List<Vector> nullSpace(){ //extracts ALL nullspace vectors
+    public List<Vector> nullSpace() {
+        return nullSpace(Config.precision);
+    }
+
+    private List<Vector> nullSpace(double threshold){ //extracts ALL nullspace vectors
         Matrix m = rowEchelon();
         List<Vector> valid = new ArrayList<>();
         int mostPivot = width();
@@ -125,7 +129,7 @@ public class Matrix {
         for (int i = height()-1; i >= 0; i--) {
 
             Vector v = new Vector(m, i, 0);
-            while (i > 0 && v.leftmostNonZeroIndex() == null) {
+            while (i > 0 && v.leftmostNonZeroIndex(threshold) == null) {
                 i--;
                 v = new Vector(m,i,0);
             }
@@ -162,8 +166,14 @@ public class Matrix {
         return norm;
     }
 
-    public Vector nullVector(){ //extracts one nullspace vector
-        return nullSpace().getFirst();
+    public Vector nullVector(boolean hasNullspace){ //extracts one nullspace vector
+        double attemptThreshold = Config.precision;
+        List<Vector> k = new ArrayList<>();
+        while ((hasNullspace ||attemptThreshold < Config.maxZeroThresholdNullspace*10) && k.isEmpty()) {
+            k = nullSpace(attemptThreshold);
+            attemptThreshold *= 10;
+        }
+        return k.getFirst();
     }
 
     public Matrix rowEchelon(){

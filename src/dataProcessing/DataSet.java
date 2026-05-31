@@ -11,7 +11,7 @@ public class DataSet {
         public final double data;
         public final Day day;
         public final Field field;
-        public double demeaned;
+        public Double demeaned;
         public Entry(double dat, Day da, Field fiel){
             data = dat;
             day = da;
@@ -19,6 +19,14 @@ public class DataSet {
         }
         public void setDemeaned(double demesne) {
             demeaned = demesne;
+        }
+
+        @Override
+        public String toString() {
+            if (demeaned != null) {
+                return data + " {"+demeaned+"}";
+            }
+            return String.valueOf(data);
         }
     }
 
@@ -39,7 +47,7 @@ public class DataSet {
 
         @Override
         public String toString() {
-            return header.toString() + ": " + this;
+            return header.toString() + ": " + super.toString();
         }
     }
 

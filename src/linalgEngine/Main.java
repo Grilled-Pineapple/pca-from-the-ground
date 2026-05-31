@@ -5,10 +5,6 @@ import dataProcessing.*;
 
 public class Main {
     void main(String[] args){
-        Expression two = new Expression(List.of(3.0,-4.0,1.0));
-        System.out.println(two);
-        System.out.println(two.removeRootFromBottom(1));
-        System.out.println(two.removeRootFromBottom(3));
 
         Expression fifteen = new Expression(List.of(-206077622.362618,
                 1156212342.682105,
@@ -28,51 +24,6 @@ public class Main {
                 1.0
         ));
         System.out.println(fifteen.solvePositive());
-
-        Expression truncation = new Expression(List.of(6.48e-07,
-                -0.000203,
-                0.025644,
-                -1.699745,
-                64.757444,
-                -1457.279644,
-                19159.435777,
-                -140930.370395,
-                541422.380489,
-                -1000649.919246,
-                827266.828553,
-                -267573.784403,
-                23072.257037,
-                -373.965,
-                1.0
-        ));
-        System.out.println(truncation.solvePositive());
-
-        Matrix NST = new Matrix (7,7);
-        NST.set(new double[]{1, 2, -1, 0, 3, 1, 2,
-                0, 1, 2, 1, -1, 2, 0,
-                2, 0, 1, -1, 1, 0, 3,
-                1, -1, 0, 2, 2, 1, -1,
-                1, 3, 1, 1, 2, 3, 2,
-                1, 1, 1, -3, -1, -1, 4,
-                4, 1, 0, 1, 6, 2, 4});
-        System.out.println(NST.rowEchelon());
-
-        Matrix tallie = new Matrix (5, 3);
-        tallie.set(new double[]{1, 2, -1,
-                2, 5, 1,
-                1, 4, 6,
-                3, 8, 3,
-                -1, -1, 4});
-        System.out.println(tallie.rowEchelon());
-
-        Matrix widie = new Matrix(4,8);
-        widie.set(new double[]{1.0, 2.0, 0.0, 3.0, -1.0, 1.0, 4.0, 2.0, 0.0, 0.0, 1.0, 1.0, 2.0, 3.0, 1.0, 2.0, 0.0,
-    0.0, 0.0, 0.0, -2.0, -2.0, -1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.5, 0.5});
-        System.out.println(widie.rowEchelon());
-        List<Vector> lmao = widie.nullSpace();
-        for (Vector v: lmao) {
-            System.out.println(v);
-        }
 
         Matrix SVDoffer = new Matrix(6,50);
         SVDoffer.set(new double[]{
@@ -97,6 +48,10 @@ public class Main {
         SVD svd = new SVD(SVDoffer);
 
         DataSet.Field testField = new DataSet.Field("Rizz");
+        testField.setEntries(List.of(0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0));
+        System.out.println(testField);
+        testField.zScorify();
+        System.out.println(testField);
 
 
         System.out.println("done!");

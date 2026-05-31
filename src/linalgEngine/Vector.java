@@ -164,8 +164,12 @@ public class Vector extends ArrayList<Double> {
     }
 
     public Integer leftmostNonZeroIndex() {
+        return leftmostNonZeroIndex(Config.precision);
+    }
+
+    public Integer leftmostNonZeroIndex(double threshold) {
         int idx = 0;
-        while (Math.abs(get(idx)) < Config.precision) {
+        while (Math.abs(get(idx)) < threshold) {
             idx++;
             if (idx >= size()) {
                 return null;
