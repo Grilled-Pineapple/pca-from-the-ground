@@ -1,3 +1,5 @@
+package linalgEngine;
+
 import java.util.*;
 
 public class Matrix {

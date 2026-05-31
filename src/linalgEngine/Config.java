@@ -1,3 +1,5 @@
+package linalgEngine;
+
 public class Config {
     public static int maxPrintSize = 100;
     public static char eqSymbol = 'λ';

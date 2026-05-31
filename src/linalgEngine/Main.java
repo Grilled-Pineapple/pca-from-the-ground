@@ -1,4 +1,7 @@
+package linalgEngine;
+
 import java.util.List;
+import dataProcessing.*;
 
 public class Main {
     void main(String[] args){
@@ -92,6 +95,10 @@ public class Main {
                 4.0, 3.0, -2.0, -5.0, -4.0, -5.0, -1.0, -1.0, 5.0, 1.0, 3.0, 3.0, -3.0, -3.0, -3.0, -2.0, 2.0, 0.0, 2.0, -5.0, 2.0, -2.0, 5.0, -5.0, 2.0, -2.0, 0.0, 2.0, -2.0, -3.0, 3.0, -3.0, 3.0, -4.0, -4.0, -4.0, 0.0, -3.0, 3.0, -2.0, -5.0, -2.0, -5.0, -1.0, -2.0, 2.0, 2.0, 1.0, -3.0, -5.0
         });
         SVD svd = new SVD(SVDoffer);
+
+        DataSet.Field testField = new DataSet.Field("Rizz");
+
+
         System.out.println("done!");
 
     }

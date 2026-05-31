@@ -1,3 +1,5 @@
+package linalgEngine;
+
 public class Eigenpair implements Comparable<Eigenpair> {
     public double eigenvalue;
     public Vector eigenvector;
